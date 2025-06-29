@@ -242,39 +242,36 @@ function getImageBuffer(
       return image.get_bytes_jpeg(85);
   }
 }
-
 function applyTransformations(
   image: PhotonImage,
   options: ImageProxyOptions
 ): PhotonImage {
-  let processedImage = image;
-
-  if (options.width || options.height) {
-    const originalWidth = processedImage.get_width();
-    const originalHeight = processedImage.get_height();
-
-    const { newWidth, newHeight } = calculateDimensions(
-      originalWidth,
-      originalHeight,
-      options.width,
-      options.height
-    );
-
-    if (newWidth !== originalWidth || newHeight !== originalHeight) {
-      const resizedImage = resize(
-        processedImage,
-        newWidth,
-        newHeight,
-        SamplingFilter.Lanczos3
-      );
-      if (processedImage !== image) {
-        processedImage.free();
-      }
-      processedImage = resizedImage;
-    }
+  if (!options.width && !options.height) {
+    return image;
   }
 
-  return processedImage;
+  const originalWidth = image.get_width();
+  const originalHeight = image.get_height();
+
+  const { newWidth, newHeight } = calculateDimensions(
+    originalWidth,
+    originalHeight,
+    options.width,
+    options.height
+  );
+
+  if (newWidth === originalWidth && newHeight === originalHeight) {
+    return image;
+  }
+
+  const resizedImage = resize(
+    image,
+    newWidth,
+    newHeight,
+    SamplingFilter.Nearest
+  );
+
+  return resizedImage;
 }
 
 async function processImage(
