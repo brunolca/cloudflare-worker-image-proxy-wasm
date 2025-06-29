@@ -278,58 +278,48 @@ async function processImage(
   sourceResponse: Response,
   options: ImageProxyOptions
 ): Promise<Response> {
-  try {
-    const contentType = sourceResponse.headers.get("content-type") || "";
+  const passThroughHeaders = {
+    "Cache-Control": sourceResponse.headers.get("cache-control") || "",
+    ETag: sourceResponse.headers.get("etag") || "",
+    "Last-Modified": sourceResponse.headers.get("last-modified") || "",
+  };
 
-    if (options.original) {
-      return new Response(sourceResponse.body, {
-        status: 200,
-        headers: {
-          "Content-Type": contentType,
-          "Cache-Control": sourceResponse.headers.get("cache-control") || "",
-          ETag: sourceResponse.headers.get("etag") || "",
-          "Last-Modified": sourceResponse.headers.get("last-modified") || "",
-        },
-      });
-    }
+  if (options.original) {
+    return new Response(sourceResponse.body, {
+      status: 200,
+      headers: {
+        "Content-Type": sourceResponse.headers.get("content-type") || "",
+        ...passThroughHeaders,
+      },
+    });
+  }
+
+  try {
+    const outputFormat = determineOutputFormat(
+      options.format,
+      sourceResponse.headers.get("accept")
+    );
 
     const imageBuffer = await sourceResponse.arrayBuffer();
     const uint8Array = new Uint8Array(imageBuffer);
+    const photonImage = PhotonImage.new_from_byteslice(uint8Array);
+    const processedImage = applyTransformations(photonImage, options);
 
-    let photonImage: PhotonImage;
-    try {
-      photonImage = PhotonImage.new_from_byteslice(uint8Array);
-    } catch (error) {
-      throw new HttpError("Invalid or unsupported image format", 400);
-    }
+    const outputBuffer = getImageBuffer(
+      processedImage,
+      outputFormat,
+      options.quality
+    );
 
-    try {
-      const processedImage = applyTransformations(photonImage, options);
-      const outputFormat = determineOutputFormat(
-        options.format,
-        sourceResponse.headers.get("accept")
-      );
-      const outputBuffer = getImageBuffer(
-        processedImage,
-        outputFormat,
-        options.quality
-      );
+    processedImage.free();
 
-      processedImage.free();
-
-      return new Response(outputBuffer, {
-        status: 200,
-        headers: {
-          "Content-Type": `image/${outputFormat}`,
-          "Cache-Control": sourceResponse.headers.get("cache-control") || "",
-          ETag: sourceResponse.headers.get("etag") || "",
-          "Last-Modified": sourceResponse.headers.get("last-modified") || "",
-        },
-      });
-    } catch (error) {
-      photonImage.free();
-      throw error;
-    }
+    return new Response(outputBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": `image/${outputFormat}`,
+        ...passThroughHeaders,
+      },
+    });
   } catch (error) {
     console.error("Error processing image:", error);
     throw new HttpError("Failed to process image", 500);
