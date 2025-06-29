@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "images-wasm",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-05-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ALLOWED_DOMAINS": ["images.unsplash.com"],
+    "MAX_WIDTH": "4000",
+    "MAX_HEIGHT": "4000"
+  }
+}

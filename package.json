@@ -1,0 +1,31 @@
+{
+  "name": "cloudflare-worker-image-proxy-wasm",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker image proxy with IPX compatibility using WebAssembly",
+  "main": "src/index.ts",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@cf-wasm/photon": "^0.1.31",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.2",
+    "wrangler": "^4.21.0"
+  },
+  "keywords": [
+    "cloudflare",
+    "worker",
+    "image",
+    "proxy",
+    "ipx",
+    "webassembly",
+    "wasm"
+  ],
+  "author": "",
+  "license": "MIT"
+}
